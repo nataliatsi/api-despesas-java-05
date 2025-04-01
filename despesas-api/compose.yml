@@ -1,0 +1,23 @@
+services:
+
+  postgres:
+    image: postgres:17.4-alpine3.21
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+      POSTGRES_DB:
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U nome_usuario -d base_dados" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
