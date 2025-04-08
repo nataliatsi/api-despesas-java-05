@@ -16,7 +16,7 @@ O projeto segue uma arquitetura baseada em camadas:
 
 A API é desenvolvida em **Spring Boot** e utiliza **PostgreSQL** como banco de dados. Para simplificar a execução, os serviços são disponibilizados via **Docker Compose**.
 
-- Veja os [Diagramas do Projeto](./docs/Diagramas.md)
+- Veja os [Diagramas do Projeto](./docs/diagramas.md)
 
 - Créditos aos autores:
   - Casos de Uso — [Pamela Brito](https://github.com/pamelabrito)
