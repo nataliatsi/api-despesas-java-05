@@ -21,6 +21,7 @@ A API é desenvolvida em **Spring Boot** e utiliza **PostgreSQL** como banco de 
 - Créditos aos autores:
   - Casos de Uso — [Pamela Brito](https://github.com/pamelabrito)
   - Diagrama de Classes — [Natália Gomes](https://github.com/nataliatsi)
+  - Modelo de Dados — [Milena Mensor](https://github.com/MilenaMensor)
 
 ---
 
