@@ -8,7 +8,6 @@ class DespesasApiApplicationTests {
 
 	@Test
 	void contextLoads() {
-		// Adicionar asserts futuramente
 	}
 
 }
