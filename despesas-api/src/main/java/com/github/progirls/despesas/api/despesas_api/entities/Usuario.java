@@ -2,6 +2,8 @@ package com.github.progirls.despesas.api.despesas_api.entities;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.Setter;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,6 +12,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "tb_usuarios")
 public class Usuario {
@@ -43,24 +47,5 @@ public class Usuario {
         this.dataCriacao = dataCriacao;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getSenha() {
-        return senha;
-    }
-
-    public LocalDateTime getDataCriacao() {
-        return dataCriacao;
-    }
 
 }
