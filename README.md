@@ -31,6 +31,23 @@ A API é desenvolvida em **Spring Boot** e utiliza **PostgreSQL** como banco de 
 
 ## Enpoints da API
 
+### 📌 Endpoint de Cadastro de Usuário (POST /api/v1/users)
+Foi criado o endpoint responsável por cadastrar novos usuários na aplicação. A funcionalidade inclui:
+
+- Validação dos dados de entrada (nome, email, senha);
+
+- Verificação de duplicidade de email;
+
+- Geração de hash seguro para a senha (BCrypt);
+
+- Persistência do usuário no banco de dados;
+
+- Retorno com mensagens claras em casos de erro (ex.: email já cadastrado).
+
+Esse endpoint é público e será utilizado no fluxo inicial de criação de conta pelos usuários.
+
+
+
 ---
 
 ## Autenticação
