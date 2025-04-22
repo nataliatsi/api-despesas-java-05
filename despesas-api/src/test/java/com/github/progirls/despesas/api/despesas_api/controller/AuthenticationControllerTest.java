@@ -72,4 +72,5 @@ public class AuthenticationControllerTest {
                 .with(httpBasic("nat@test.com", "senhaErrada")))
                 .andExpect(status().isUnauthorized());
     }
+
 }
