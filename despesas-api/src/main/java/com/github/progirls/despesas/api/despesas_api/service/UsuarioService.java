@@ -50,13 +50,6 @@ public class UsuarioService {
 
     }
 
-<<<<<<< HEAD
-    // Retirar antes de enviar o PR!!!!
-    public List<Usuario> listarUsuarios() {
-        return usuarioRepository.findAll();
-    }
-
-=======
     @Transactional
     public void atualizarSenha(UsuarioRedefinirSenhaDTO novaSenha, Authentication authentication) {
 
@@ -69,5 +62,4 @@ public class UsuarioService {
         usuario.setSenha(novaSenhaCriptografada);
         usuarioRepository.save(usuario);
     }
->>>>>>> e1ed690eb6bc1f71162243fbab181248bf39d8fe
 }

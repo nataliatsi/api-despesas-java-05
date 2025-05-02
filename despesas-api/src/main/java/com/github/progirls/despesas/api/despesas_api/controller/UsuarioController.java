@@ -17,24 +17,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 
-<<<<<<< HEAD
 import org.springframework.web.bind.annotation.GetMapping;
-=======
 import org.springframework.web.bind.annotation.PatchMapping;
->>>>>>> e1ed690eb6bc1f71162243fbab181248bf39d8fe
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("api/v1/usuarios")
 public class UsuarioController {
-<<<<<<< HEAD
     
     private final UsuarioService usuarioService;
-=======
-
-    private UsuarioService usuarioService;
->>>>>>> e1ed690eb6bc1f71162243fbab181248bf39d8fe
 
     private UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
@@ -59,28 +51,4 @@ public class UsuarioController {
         }
     }
 
-<<<<<<< HEAD
-    @GetMapping
-    public ResponseEntity<List<Usuario>> pegarUsuarios() {
-        return ResponseEntity.status(200).body(usuarioService.listarUsuarios());
-    }
-    
-=======
-    @Operation(summary = "Atualizar a senha do usuário",
-
-            description = "Este endpoint permite que o usuário altere sua senha. " +
-                    "A senha deve ser fornecida no corpo da requisição, " +
-                    "e o usuário precisa estar autenticado para realizar a alteração. " +
-                    "Caso as credenciais sejam inválidas ou ausentes, será retornado um erro 401.", responses = {
-                            @ApiResponse(responseCode = "200", description = "Autenticação bem-sucedida. Senha alterada com sucesso."),
-                            @ApiResponse(responseCode = "401", description = "Falha na autenticação. Credenciais inválidas ou ausentes.")
-                    })
-    @PatchMapping("/senha")
-    public ResponseEntity<String> atualizarSenha(@Valid @RequestBody UsuarioRedefinirSenhaDTO novaSenha,
-            Authentication authentication) {
-        usuarioService.atualizarSenha(novaSenha, authentication);
-        return ResponseEntity.ok().body("Senha alterada com sucesso!");
-    }
-
->>>>>>> e1ed690eb6bc1f71162243fbab181248bf39d8fe
 }
