@@ -15,7 +15,7 @@ public record UsuarioRegisterDto(
     String email,
     
     @NotBlank(message = "A senha não pode ser vazia")
-    @Size(min = 8, message = "A senha deve conter no mínimo 8 caracteres!")
+    @Size(min = 8, max = 16, message = "A senha deve conter entre 8 e 16 caracteres!")
     @Pattern(
         regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=]).*$",
         message = "A senha deve conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial")
