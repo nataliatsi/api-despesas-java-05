@@ -2,9 +2,9 @@ package com.github.progirls.despesas.api.despesas_api.service;
 
 import com.github.progirls.despesas.api.despesas_api.dto.DespesaDTO;
 import com.github.progirls.despesas.api.despesas_api.dto.NovaDespesaDTO;
-import com.github.progirls.despesas.api.despesas_api.dto.UsuarioDTO;
 import com.github.progirls.despesas.api.despesas_api.entities.Despesa;
 import com.github.progirls.despesas.api.despesas_api.entities.Usuario;
+import com.github.progirls.despesas.api.despesas_api.mapper.DespesaMapper;
 import com.github.progirls.despesas.api.despesas_api.repository.DespesaRepository;
 import com.github.progirls.despesas.api.despesas_api.repository.UsuarioRepository;
 import org.springframework.security.core.Authentication;
@@ -18,18 +18,16 @@ public class DespesaService {
 
     private final DespesaRepository despesaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final DespesaMapper despesaMapper;
 
-    public DespesaService(DespesaRepository despesaRepository, UsuarioRepository usuarioRepository) {
+    public DespesaService(DespesaRepository despesaRepository, UsuarioRepository usuarioRepository, DespesaMapper despesaMapper) {
         this.despesaRepository = despesaRepository;
         this.usuarioRepository = usuarioRepository;
+        this.despesaMapper = despesaMapper;
     }
 
     public DespesaDTO criarDespesa(NovaDespesaDTO dto, Authentication authentication) {
-        Despesa despesa = new Despesa();
-        despesa.setDescricao(dto.descricao());
-        despesa.setValor(dto.valor());
-        despesa.setParcelamento(dto.parcelamento());
-        despesa.setDataInicio(dto.dataInicio());
+        Despesa despesa = despesaMapper.toEntity(dto);
 
         if (dto.parcelamento() == 1) {
             despesa.setDataFim(dto.dataInicio());
@@ -45,18 +43,7 @@ public class DespesaService {
         despesa.setUsuario(usuario);
 
         Despesa salva = despesaRepository.save(despesa);
-        UsuarioDTO usuarioDTO = new UsuarioDTO(usuario.getNome(), usuario.getEmail(), usuario.getDataCriacao());
-
-        return new DespesaDTO(
-                salva.getId(),
-                usuarioDTO,
-                salva.getValor(),
-                salva.getDescricao(),
-                salva.getParcelamento(),
-                salva.getDataInicio(),
-                salva.getDataFim(),
-                salva.getQuitado()
-        );
+        return despesaMapper.toDTO(salva);
     }
 
     private LocalDate calcularDataFim(LocalDate dataInicio, int parcelamento) {
