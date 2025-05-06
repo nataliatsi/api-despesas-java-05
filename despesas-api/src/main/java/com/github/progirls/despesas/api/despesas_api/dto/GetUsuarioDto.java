@@ -5,7 +5,6 @@ import java.util.List;
 
 public record GetUsuarioDto(
     String nome,
-    LocalDateTime dataCriacao,
-    List<GetDespesaDto> despesas
+    LocalDateTime dataCriacao
 ) {
 }

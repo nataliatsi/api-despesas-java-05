@@ -21,12 +21,10 @@ public class UsuarioService {
 
     private BCryptPasswordEncoder passwordEncoder;
     private final UsuarioRepository usuarioRepository;
-    private final FindUser findUser;
 
-    public UsuarioService(BCryptPasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository, FindUser findUser) {
+    public UsuarioService(BCryptPasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository) {
         this.passwordEncoder = passwordEncoder;
         this.usuarioRepository = usuarioRepository;
-        this.findUser = findUser;
     }
     
     public Usuario criarUsuario(UsuarioRegisterDto usuarioRegisterDto) {
