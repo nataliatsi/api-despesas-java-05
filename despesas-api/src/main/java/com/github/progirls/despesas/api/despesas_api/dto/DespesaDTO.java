@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public record DespesaDTO(
         Long id,
         UsuarioDTO usuario,
+        String categoria,
         Double valor,
         String descricao,
         Integer parcelamento,

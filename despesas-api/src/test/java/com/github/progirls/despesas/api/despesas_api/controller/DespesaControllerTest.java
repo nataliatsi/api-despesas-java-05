@@ -63,6 +63,7 @@ public class DespesaControllerTest {
         String token = JsonPath.read(json, "$.token");
 
         NovaDespesaDTO dto = new NovaDespesaDTO(
+                "SHOPPING",
                 100.0,
                 "Shopping",
                 2,
@@ -106,6 +107,7 @@ public class DespesaControllerTest {
     @Test
     void deveRetornarErro401() throws Exception{
         NovaDespesaDTO dto = new NovaDespesaDTO(
+                "ESTUDOS",
                 100.0,
                 "Shopping",
                 2,
