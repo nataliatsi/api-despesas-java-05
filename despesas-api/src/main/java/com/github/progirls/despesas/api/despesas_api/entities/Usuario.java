@@ -12,11 +12,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+@Entity
+@Table(name = "tb_usuarios")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "tb_usuarios")
 public class Usuario {
 
     @Id
