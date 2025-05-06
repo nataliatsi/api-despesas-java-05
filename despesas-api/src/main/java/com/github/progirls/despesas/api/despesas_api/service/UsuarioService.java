@@ -28,7 +28,7 @@ public class UsuarioService {
     }
 
     // Método para a criação do usuário
-    public Usuario criarUsuario(UsuarioRegisterDto usuarioRegisterDto) {
+    public void criarUsuario(UsuarioRegisterDto usuarioRegisterDto) {
         // If para verificar se o email já foi utilizado, evitando repetição
         var usuarioEmail = usuarioRepository.findByEmail(usuarioRegisterDto.email());
         if (usuarioEmail.isPresent()) {
@@ -45,9 +45,8 @@ public class UsuarioService {
         usuario.setDataCriacao(LocalDateTime.now());
 
         // Salvando no repositório e retornando o usuário
-        usuario = usuarioRepository.save(usuario);
+        usuarioRepository.save(usuario);
 
-        return usuario;
     }
 
     @Transactional
