@@ -3,8 +3,10 @@ package com.github.progirls.despesas.api.despesas_api.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.progirls.despesas.api.despesas_api.dto.NovaDespesaDTO;
 import com.github.progirls.despesas.api.despesas_api.entities.Usuario;
+import com.github.progirls.despesas.api.despesas_api.repository.DespesaRepository;
 import com.github.progirls.despesas.api.despesas_api.repository.UsuarioRepository;
 import com.jayway.jsonpath.JsonPath;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,9 +14,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
+import java.io.UnsupportedEncodingException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -22,6 +27,9 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+// Em caso de emergência utilizar anotação na classe:
+// @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -39,22 +47,47 @@ public class DespesaControllerTest {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    private String userEmail;
+    private final String userSenha = "Teste@123";
+    private String token;
+    @Autowired
+    private DespesaRepository despesaRepository;
+
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
+        despesaRepository.deleteAll();
+        usuarioRepository.deleteAll();
+
+        userEmail = "teste" + System.currentTimeMillis() + "@teste.com";
 
         Usuario user = new Usuario(
                 null,
                 "Teste",
-                "natalia@teste.com",
-                passwordEncoder.encode("12345"),
+                userEmail,
+                passwordEncoder.encode(userSenha),
                 LocalDateTime.now());
         usuarioRepository.save(user);
+
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/login")
+                        .with(httpBasic(userEmail, userSenha)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseJson = loginResult.getResponse().getContentAsString();
+        token = new ObjectMapper().readTree(responseJson).get("token").asText();
+
+    }
+
+    @AfterEach
+    void tearDown() {
+        despesaRepository.deleteAll();
+        usuarioRepository.deleteAll();
     }
 
     @Test
     void deveCriarDespesaComSucesso() throws Exception {
         var response = mockMvc.perform(post("/api/v1/login")
-                        .with(httpBasic("natalia@teste.com", "12345")))
+                        .with(httpBasic(userEmail, userSenha)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists())
                 .andReturn();
@@ -63,7 +96,7 @@ public class DespesaControllerTest {
         String token = JsonPath.read(json, "$.token");
 
         NovaDespesaDTO dto = new NovaDespesaDTO(
-                "SHOPPING",
+                "Shopping",
                 100.0,
                 "Shopping",
                 2,
@@ -81,15 +114,6 @@ public class DespesaControllerTest {
 
     @Test
     void deveRetornarErro400() throws Exception{
-        var response = mockMvc.perform(post("/api/v1/login")
-                        .with(httpBasic("natalia@teste.com", "12345")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").exists())
-                .andReturn();
-
-        String json = response.getResponse().getContentAsString();
-        String token = JsonPath.read(json, "$.token");
-
         String despesaInvalida = """
                 {
                     "valor" = 230.0,
@@ -107,7 +131,7 @@ public class DespesaControllerTest {
     @Test
     void deveRetornarErro401() throws Exception{
         NovaDespesaDTO dto = new NovaDespesaDTO(
-                "ESTUDOS",
+                "Shopping",
                 100.0,
                 "Shopping",
                 2,
