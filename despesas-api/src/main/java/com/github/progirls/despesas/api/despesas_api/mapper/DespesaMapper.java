@@ -1,6 +1,7 @@
 package com.github.progirls.despesas.api.despesas_api.mapper;
 
 import com.github.progirls.despesas.api.despesas_api.dto.DespesaDTO;
+import com.github.progirls.despesas.api.despesas_api.dto.DespesaFiltradaDTO;
 import com.github.progirls.despesas.api.despesas_api.dto.NovaDespesaDTO;
 import com.github.progirls.despesas.api.despesas_api.dto.UsuarioDTO;
 import com.github.progirls.despesas.api.despesas_api.entities.Despesa;
@@ -17,6 +18,8 @@ public interface DespesaMapper {
 
     @Mapping(source = "usuario", target = "usuario")
     DespesaDTO toDTO(Despesa despesa);
+
+    DespesaFiltradaDTO toFiltradaDTO(Despesa despesa);
 
     UsuarioDTO toUsuarioDTO(Usuario usuario);
 }

@@ -43,7 +43,7 @@ public class AuthenticationControllerTest {
                 null,
                 "Teste",
                 "natalia@teste.com",
-                passwordEncoder.encode("12345"),
+                passwordEncoder.encode("Teste@123"),
                 LocalDateTime.now());
 
         usuarioRepository.save(user);
@@ -53,7 +53,7 @@ public class AuthenticationControllerTest {
     void deveRetornarTokenComCredenciaisValidas() throws Exception {
 
         var response = mockMvc.perform(post("/api/v1/login")
-                .with(httpBasic("natalia@teste.com", "12345")))
+                .with(httpBasic("natalia@teste.com", "Teste@123")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists())
                 .andReturn();
@@ -69,7 +69,7 @@ public class AuthenticationControllerTest {
     @Test
     void deveRetornar401ComCredenciaisInvalidas() throws Exception {
         mockMvc.perform(post("/api/v1/login")
-                .with(httpBasic("nat@test.com", "senhaErrada")))
+                .with(httpBasic("natalia@teste.com", "senhaErrada")))
                 .andExpect(status().isUnauthorized());
     }
 

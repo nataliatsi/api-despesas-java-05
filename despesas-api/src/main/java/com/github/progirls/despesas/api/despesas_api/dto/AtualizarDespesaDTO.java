@@ -10,6 +10,10 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public record AtualizarDespesaDTO(
+    @NotBlank(message = "A categoria da despesa é obrigatória")
+    @Size(max = 55, message = "A descrição deve ter no máximo 55 caracteres")
+    String categoria,
+
     @NotNull(message = "O valor da despesa precisa ser preenchido.")
     @Positive(message = "O valor deve ser positivo.")
     Double valor,

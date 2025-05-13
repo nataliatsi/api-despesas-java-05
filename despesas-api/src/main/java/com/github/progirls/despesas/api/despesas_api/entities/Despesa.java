@@ -7,11 +7,11 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+@Table(name = "despesas")
+@Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "despesas")
-@Entity
 public class Despesa {
 
     @Id
@@ -22,6 +22,9 @@ public class Despesa {
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
+
+    @Column(nullable = false)
+    private String categoria;
 
     @Column(nullable = false)
     private Double valor;
