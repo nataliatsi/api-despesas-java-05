@@ -122,5 +122,13 @@ public class DespesaService {
         return dto.quitado() != null ? dto.quitado() : false;
     }
 
-    
+    // TODO: implementar corpo do método
+    // 1) Validar se a despesa com o ID informado existe, lançar exceção caso contrário.
+    // 2) Validar se o usuário autenticado (via Authentication) é dono da despesa para permitir a operação.
+    // 3) Se válido, alterar o atributo `ativo` para false para realizar o safe delete.
+    // 4) Salvar a entidade atualizada no repositório.
+    // 5) Lançar exceção ou retornar erro apropriado se a validação falhar.
+    public void safeDeleteDespesa(Long id, Authentication authentication) {
+
+    }
 }

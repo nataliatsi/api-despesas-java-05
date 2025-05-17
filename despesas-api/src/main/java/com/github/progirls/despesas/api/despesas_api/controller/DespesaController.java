@@ -128,4 +128,23 @@ public class DespesaController {
             return ResponseEntity.badRequest().body("Erro ao atualizar despesa: " + e.getMessage());
         }
     }
+
+    @Operation(
+            summary = "Desativar uma despesa (safe delete)",
+            description = "Marca a despesa como inativa em vez de removê-la do banco de dados. " +
+                    "Retorna mensagem confirmando a exclusão lógica.",
+            responses = {
+                @ApiResponse(responseCode = "200", description = "Despesa deletada com sucesso.", content = @Content(mediaType = "text/plain")),
+                @ApiResponse(responseCode = "400", description = "Despesa não encontrada", content = @Content),
+                @ApiResponse(responseCode = "401", description = "Falha na autenticação. Token ausente ou inválido.", content = @Content),
+            }
+    )
+    @PatchMapping("/{id}/inativar")
+    public ResponseEntity<?> desativarDespesa(
+            @Parameter(description = "ID da despesa a ser inativada", required = true)
+            @PathVariable Long id,
+            Authentication authentication) {
+        despesaService.safeDeleteDespesa(id, authentication);
+        return ResponseEntity.ok("Despesa deletada com sucesso.");
+    }
 }
