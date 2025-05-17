@@ -1,123 +1,189 @@
 package com.github.progirls.despesas.api.despesas_api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.progirls.despesas.api.despesas_api.dto.NovaDespesaDTO;
-import com.github.progirls.despesas.api.despesas_api.entities.Usuario;
-import com.github.progirls.despesas.api.despesas_api.repository.UsuarioRepository;
-import com.jayway.jsonpath.JsonPath;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.checkerframework.checker.units.qual.s;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+
+import com.jayway.jsonpath.JsonPath;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.progirls.despesas.api.despesas_api.dto.AtualizarDespesaDTO;
+import com.github.progirls.despesas.api.despesas_api.dto.NovaDespesaDTO;
+import com.github.progirls.despesas.api.despesas_api.entities.Despesa;
+import com.github.progirls.despesas.api.despesas_api.entities.Usuario;
+import com.github.progirls.despesas.api.despesas_api.repository.DespesaRepository;
+import com.github.progirls.despesas.api.despesas_api.repository.UsuarioRepository;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+// Em caso de emergência utilizar anotação na classe:
+// @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public class DespesaControllerTest {
+    
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private UsuarioRepository usuarioRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Autowired
+    private DespesaRepository despesaRepository;
+
+    private String userEmail;
+    private final String userSenha = "Teste@123";
+    private String token;
+
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
+        despesaRepository.deleteAll();
+        usuarioRepository.deleteAll();
+
+        userEmail = "teste" + System.currentTimeMillis() + "@teste.com";
 
         Usuario user = new Usuario(
                 null,
                 "Teste",
-                "natalia@teste.com",
-                passwordEncoder.encode("12345"),
+                userEmail,
+                passwordEncoder.encode(userSenha),
                 LocalDateTime.now());
         usuarioRepository.save(user);
+
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/login")
+                        .with(httpBasic(userEmail, userSenha)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseJson = loginResult.getResponse().getContentAsString();
+        token = new ObjectMapper().readTree(responseJson).get("token").asText();
+
+    }
+
+    @AfterEach
+    void tearDown() {
+        despesaRepository.deleteAll();
+        usuarioRepository.deleteAll();
     }
 
     @Test
-    void deveCriarDespesaComSucesso() throws Exception {
-        var response = mockMvc.perform(post("/api/v1/login")
-                        .with(httpBasic("natalia@teste.com", "12345")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").exists())
-                .andReturn();
+    @DisplayName("Deve criar uma despesa com sucesso retornando status 201")
+    void deveCriarUmaDespesaComSucessoRetornar201() throws Exception {
 
-        String json = response.getResponse().getContentAsString();
-        String token = JsonPath.read(json, "$.token");
-
-        NovaDespesaDTO dto = new NovaDespesaDTO(
-                100.0,
-                "Shopping",
-                2,
-                LocalDate.now(),
-                null,
-                false
-        );
+        NovaDespesaDTO novaDespesa = new NovaDespesaDTO("MERCADO",
+            250.5,
+            "mercado compras",
+            2,
+            LocalDate.now(),
+            null,
+            false);
 
         mockMvc.perform(post("/api/v1/despesas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto))
-                        .header("Authorization", "Bearer " + token))
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(novaDespesa)))
                 .andExpect(status().isCreated());
+
     }
 
     @Test
-    void deveRetornarErro400() throws Exception{
-        var response = mockMvc.perform(post("/api/v1/login")
-                        .with(httpBasic("natalia@teste.com", "12345")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").exists())
-                .andReturn();
-
-        String json = response.getResponse().getContentAsString();
-        String token = JsonPath.read(json, "$.token");
-
+    @DisplayName("Deve retornar erro 400 por criar uma despesa com campos inválidos")
+    void deveRetornarErro400DespesaComCampoInválidos() throws Exception {
+                
         String despesaInvalida = """
                 {
-                    "valor" = 230.0,
-                    "descricao" = "Despesa Inválida"
+                    "valor": 235.0,
+                    "descricao": "roupas",
+                    "parcelamento": 3
                 }
-                """;
+                """; 
 
         mockMvc.perform(post("/api/v1/despesas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(despesaInvalida)
-                        .header("Authorization", "Bearer " + token))
+                .header("Authorization", "Bearer " + this.token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(despesaInvalida))
                 .andExpect(status().isBadRequest());
     }
-
+    
     @Test
-    void deveRetornarErro401() throws Exception{
-        NovaDespesaDTO dto = new NovaDespesaDTO(
-                100.0,
-                "Shopping",
+    @DisplayName("Deve retornar erro 401 ao tentar criar uma despesa com token inválido")
+    void deveRetornar401CriarDespesaComTokenInvalido() throws Exception {
+
+        NovaDespesaDTO novaDespesa = new NovaDespesaDTO("SHOPPING",
+                170.2,
+                "shopping roupas",
                 2,
                 LocalDate.now(),
                 null,
-                false
-        );
+                false);
 
         mockMvc.perform(post("/api/v1/despesas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto))
-                        .header("Authorization", "Bearer TOKEN_INVALIDO"))
+                .header("Authorization", "Bearer tokenInvalido123")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(novaDespesa)))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    @DisplayName("Deve listar todas as despesas sem filtro, porém páginadas")
+    void deveListarTodasSemFiltrosComSucesso200() throws Exception {
+        mockMvc.perform(get("/api/v1/despesas")
+                .header("Authorization", "Bearer " + this.token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Deve retornar as despesas com o filtro e status 200")
+    void deveListarAsDespesasFiltradasComSucesso200() throws Exception {
+        mockMvc.perform(get("/api/v1/despesas")
+                .param("categoria", "TRANSPORTE")
+                .header("Authorization", "Bearer " + this.token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Deve retornar erro 400 ao tentar filtar a despesa")
+    void deveRetornar400AoListarDespesaComFiltroErrado() throws Exception {
+        mockMvc.perform(get("/api/v1/despesas")
+                .param("categoria", "MERCADO")
+                .param("dataInicio", "data invalida")
+                .header("Authorization", "Bearer " + this.token))
+                .andExpect(status().isBadRequest());
+                
+    }
+
+    @Test
+    @DisplayName("Deve retornar o erro 401 ao tentar listar as despesas com um token inválido")
+    void deveRetornar401AoListarDespesaComUmTokenInvalido() throws Exception {
+        mockMvc.perform(get("/api/v1/despesas")
+                .header("Authorization", "Bearer token.invalido"))
+                .andExpect(status().isUnauthorized());
+    }
+
 }

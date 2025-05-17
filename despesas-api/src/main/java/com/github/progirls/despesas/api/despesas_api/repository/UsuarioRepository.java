@@ -10,4 +10,5 @@ import com.github.progirls.despesas.api.despesas_api.entities.Usuario;
 public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
     Optional<Usuario> findByEmail(String email);
     boolean existsByEmail(String email);
+    Optional<Usuario> findByNome(String nome);
 }
