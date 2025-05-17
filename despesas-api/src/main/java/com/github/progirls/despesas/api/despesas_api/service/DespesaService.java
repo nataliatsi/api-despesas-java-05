@@ -12,18 +12,22 @@ import com.github.progirls.despesas.api.despesas_api.repository.DespesaRepositor
 import com.github.progirls.despesas.api.despesas_api.repository.UsuarioRepository;
 import com.github.progirls.despesas.api.despesas_api.security.AuthenticatedUserService;
 
+import com.github.progirls.despesas.api.despesas_api.security.UserAuthenticated;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class DespesaService {
@@ -122,13 +126,13 @@ public class DespesaService {
         return dto.quitado() != null ? dto.quitado() : false;
     }
 
-    // TODO: implementar corpo do método
-    // 1) Validar se a despesa com o ID informado existe, lançar exceção caso contrário.
-    // 2) Validar se o usuário autenticado (via Authentication) é dono da despesa para permitir a operação.
-    // 3) Se válido, alterar o atributo `ativo` para false para realizar o safe delete.
-    // 4) Salvar a entidade atualizada no repositório.
-    // 5) Lançar exceção ou retornar erro apropriado se a validação falhar.
-    public void safeDeleteDespesa(Long id, Authentication authentication) {
+    public void safeDeleteDespesa(Long idDespesa, Authentication authentication) {
+        var idUsuario = authenticatedUserService.getIdUsuarioAutenticado(authentication);
+
+        var despesa = despesaRepository.buscarDespesaDoUsuario(idDespesa, idUsuario).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID da despesa inválido ou não pertence ao usuário."));
+
+        despesa.setAtivo(false);
+        despesaRepository.save(despesa);
 
     }
 }
