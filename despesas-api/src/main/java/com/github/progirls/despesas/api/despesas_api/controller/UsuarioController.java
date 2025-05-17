@@ -51,4 +51,20 @@ public class UsuarioController {
         }
     }
 
+    @Operation(summary = "Atualizar a senha do usuário",
+
+            description = "Este endpoint permite que o usuário altere sua senha. " +
+                    "A senha deve ser fornecida no corpo da requisição, " +
+                    "e o usuário precisa estar autenticado para realizar a alteração. " +
+                    "Caso as credenciais sejam inválidas ou ausentes, será retornado um erro 401.", responses = {
+            @ApiResponse(responseCode = "200", description = "Autenticação bem-sucedida. Senha alterada com sucesso."),
+            @ApiResponse(responseCode = "401", description = "Falha na autenticação. Credenciais inválidas ou ausentes.")
+    })
+    @PatchMapping("/senha")
+    public ResponseEntity<String> atualizarSenha(@Valid @RequestBody UsuarioRedefinirSenhaDTO novaSenha,
+                                                 Authentication authentication) {
+        usuarioService.atualizarSenha(novaSenha, authentication);
+        return ResponseEntity.ok().body("Senha alterada com sucesso!");
+    }
+
 }
