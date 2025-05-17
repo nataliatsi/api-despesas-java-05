@@ -1,6 +1,7 @@
 package com.github.progirls.despesas.api.despesas_api.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -19,17 +20,15 @@ import jakarta.transaction.Transactional;
 public class UsuarioService {
 
     private BCryptPasswordEncoder passwordEncoder;
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    // Método Construtor
     public UsuarioService(BCryptPasswordEncoder passwordEncoder, UsuarioRepository usuarioRepository) {
         this.passwordEncoder = passwordEncoder;
         this.usuarioRepository = usuarioRepository;
     }
-
-    // Método para a criação do usuário
-    public void criarUsuario(UsuarioRegisterDto usuarioRegisterDto) {
-        // If para verificar se o email já foi utilizado, evitando repetição
+    
+    public Usuario criarUsuario(UsuarioRegisterDto usuarioRegisterDto) {
+        
         var usuarioEmail = usuarioRepository.findByEmail(usuarioRegisterDto.email());
         if (usuarioEmail.isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email já cadastrado, por favor tente outro.");
@@ -37,15 +36,15 @@ public class UsuarioService {
 
         String encryptedPassword = passwordEncoder.encode(usuarioRegisterDto.senha());
 
-        // Criando o novo usuário e salvando os parâmetros passados
         Usuario usuario = new Usuario();
         usuario.setNome(usuarioRegisterDto.nome());
         usuario.setSenha(encryptedPassword);
         usuario.setEmail(usuarioRegisterDto.email());
         usuario.setDataCriacao(LocalDateTime.now());
 
-        // Salvando no repositório e retornando o usuário
-        usuarioRepository.save(usuario);
+        usuario = usuarioRepository.save(usuario);
+
+        return usuario;
 
     }
 

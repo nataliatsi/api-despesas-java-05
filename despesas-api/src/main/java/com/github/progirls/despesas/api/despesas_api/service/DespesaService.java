@@ -1,5 +1,6 @@
 package com.github.progirls.despesas.api.despesas_api.service;
 
+import com.github.progirls.despesas.api.despesas_api.dto.AtualizarDespesaDTO;
 import com.github.progirls.despesas.api.despesas_api.dto.DespesaDTO;
 import com.github.progirls.despesas.api.despesas_api.dto.DespesaFiltradaDTO;
 import com.github.progirls.despesas.api.despesas_api.dto.NovaDespesaDTO;
@@ -10,10 +11,17 @@ import com.github.progirls.despesas.api.despesas_api.mapper.DespesaMapper;
 import com.github.progirls.despesas.api.despesas_api.repository.DespesaRepository;
 import com.github.progirls.despesas.api.despesas_api.repository.UsuarioRepository;
 import com.github.progirls.despesas.api.despesas_api.security.AuthenticatedUserService;
+
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -32,6 +40,7 @@ public class DespesaService {
         this.authenticatedUserService = authenticatedUserService;
     }
 
+    @Transactional
     public DespesaDTO criarDespesa(NovaDespesaDTO dto, Authentication authentication) {
         Despesa despesa = despesaMapper.toEntity(dto);
 
@@ -67,6 +76,44 @@ public class DespesaService {
                 .toList();
     }
 
+    @Transactional
+    public Page<DespesaDTO> listarDespesaDoUsuario(Authentication authentication, Pageable pageable) {
+
+        String email = authentication.getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
+
+        return despesaRepository.findByUsuario(usuario, pageable)
+                .map(despesaMapper::toDTO);
+    }
+
+    @Transactional
+    public DespesaDTO editarDespesa(Authentication authentication, Long despesaId, AtualizarDespesaDTO atualizarDespesa) throws AccessDeniedException {
+        String email = authentication.getName();
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario não encontrado."));
+
+        Despesa despesa = despesaRepository.findById(despesaId)
+                .orElseThrow(() -> new EntityNotFoundException("Despesa não encontrada."));
+
+        if (!despesa.getUsuario().getId().equals(usuario.getId())) {
+            throw new AccessDeniedException("Você não tem permissão para editar essa despesa.");
+        }
+
+        despesa.setValor(atualizarDespesa.valor());
+        despesa.setDescricao(atualizarDespesa.descricao());
+        despesa.setParcelamento(atualizarDespesa.parcelamento());
+        despesa.setDataInicio(atualizarDespesa.dataInicio());
+
+        if (atualizarDespesa.parcelamento() == 1) {
+            despesa.setDataFim(atualizarDespesa.dataInicio());
+        } else {
+            despesa.setDataFim(atualizarDespesa.dataInicio().plusMonths(atualizarDespesa.parcelamento()));
+        }
+
+        return despesaMapper.toDTO(despesaRepository.save(despesa));
+    }
+
     private LocalDate calcularDataFim(LocalDate dataInicio, int parcelamento) {
         return dataInicio.plusMonths(parcelamento);
     }
@@ -75,4 +122,5 @@ public class DespesaService {
         return dto.quitado() != null ? dto.quitado() : false;
     }
 
+    
 }

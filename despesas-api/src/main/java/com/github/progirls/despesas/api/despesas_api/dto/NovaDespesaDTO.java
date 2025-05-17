@@ -8,6 +8,7 @@ public record NovaDespesaDTO(
         @NotBlank(message = "A categoria da despesa é obrigatória")
         @Size(max = 55, message = "A descrição deve ter no máximo 55 caracteres")
         String categoria,
+        
         @NotNull(message = "O valor da despesa é obrigatório")
         @Positive(message = "O valor deve ser maior que zero")
         Double valor,

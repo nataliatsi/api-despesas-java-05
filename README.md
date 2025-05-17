@@ -36,6 +36,9 @@ A API é desenvolvida em **Spring Boot** e utiliza **PostgreSQL** como banco de 
 | POST   | `/api/v1/usuarios`          | Cadastra um novo usuário                             | ❌ Não requer     |
 | POST   | `/api/v1/login`             | Autentica o usuário e retorna um token JWT           | ✅ Basic Auth     |
 | PATCH  | `/api/v1/usuarios/senha`    | Redefine a senha do usuário autenticado              | ✅ JWT Token      |
+| POST   | `/api/v1/despesas`          | Cria uma nova despesa ao usuário autenticado         | ✅ JWT Token      |
+| GET    | `/api/v1/despesas`          | Filtra as despesas do usuário autenticado, pode ser por filtro ou todas   | ✅ JWT Token      |
+| PUT    | `/api/v1/despesas`          | Atualiza uma despesa do usuário autenticado pelo seu ID                   | ✅ JWT Token      |
 
 
 ---

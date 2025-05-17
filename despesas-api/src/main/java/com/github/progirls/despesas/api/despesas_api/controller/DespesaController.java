@@ -2,15 +2,25 @@ package com.github.progirls.despesas.api.despesas_api.controller;
 
 import com.github.progirls.despesas.api.despesas_api.dto.DespesaFiltradaDTO;
 import com.github.progirls.despesas.api.despesas_api.dto.ListaDespesasResponseDTO;
+import com.github.progirls.despesas.api.despesas_api.dto.AtualizarDespesaDTO;
+import com.github.progirls.despesas.api.despesas_api.dto.DespesaDTO;
 import com.github.progirls.despesas.api.despesas_api.dto.NovaDespesaDTO;
+import com.github.progirls.despesas.api.despesas_api.dto.PageResponseDTO;
 import com.github.progirls.despesas.api.despesas_api.service.DespesaService;
+
+import io.micrometer.core.ipc.http.HttpSender.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
+
+import java.nio.file.AccessDeniedException;
+
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -40,7 +50,7 @@ public class DespesaController {
     public ResponseEntity<?> criarDespesa(@Valid @RequestBody NovaDespesaDTO dto, Authentication authentication) {
         try {
             var novaDespesa = despesaService.criarDespesa(dto, authentication);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Despesa Criada com sucesso " + novaDespesa);
+            return ResponseEntity.status(HttpStatus.CREATED).body(novaDespesa);
 
         } catch (Exception e) {
 
@@ -50,17 +60,18 @@ public class DespesaController {
     }
 
     @Operation(
-            summary = "Buscar despesas com filtros (categoria e/ou datas)",
-            description = "Retorna uma lista de despesas filtradas por categoria e/ou intervalo de datas. Todos os filtros são opcionais.",
+            summary = "Lista as despesas com ou sem filtro com o usuário autenticado",
+            description = "Se nenhum filtro for passado, retorna a lista de despesas paginadas. Se filtros forem usados, retorna a lista filtrada",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Despesas encontradas com sucesso",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = ListaDespesasResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Parâmetros inválidos", content = @Content)
+                    @ApiResponse(responseCode = "400", description = "Parâmetros inválidos", content = @Content),
+                    @ApiResponse(responseCode = "401", description = "Falha na autenticação. Token inválido ou ausente.")
             }
     )
     @GetMapping
-    public ResponseEntity<ListaDespesasResponseDTO> buscarDespesasComFiltros(
+    public ResponseEntity<?> buscarDespesasComFiltros(
             @Parameter(description = "Categoria da despesa (opcional)")
             @RequestParam(required = false) String categoria,
 
@@ -71,14 +82,50 @@ public class DespesaController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
             Authentication authentication
     ) {
-        List<DespesaFiltradaDTO> despesas = despesaService.buscarDespesasComFiltros(categoria, dataInicio, dataFim, authentication);
+        boolean comFiltro = categoria != null || dataInicio != null || dataFim != null;
 
-        String mensagem = despesas.isEmpty()
-                ? "Nenhuma despesa encontrada com os filtros fornecidos."
-                : "Despesas encontradas com sucesso.";
+        if (comFiltro) {
+            List<DespesaFiltradaDTO> despesas = despesaService.buscarDespesasComFiltros(categoria, dataInicio, dataFim, authentication);
+    
+            String mensagem = despesas.isEmpty()
+                    ? "Nenhuma despesa encontrada com os filtros fornecidos."
+                    : "Despesas encontradas com sucesso.";
+    
+            ListaDespesasResponseDTO resposta = new ListaDespesasResponseDTO(mensagem, despesas);
+            return ResponseEntity.ok(resposta);
+            
+        } else {
+            
+            try {
+                Pageable pageable = PageRequest.of(0, 6);
+                Page<DespesaDTO> despesaPage = despesaService.listarDespesaDoUsuario(authentication, pageable);
+        
+                return ResponseEntity.ok(new PageResponseDTO<>(despesaPage));
+        
+            } catch (Exception e) {
+        
+                return ResponseEntity.badRequest().body("Erro inesperado: " + e.getMessage());
+            }
+        }
 
-        ListaDespesasResponseDTO resposta = new ListaDespesasResponseDTO(mensagem, despesas);
-        return ResponseEntity.ok(resposta);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> atualizarDespesa(@PathVariable Long id, 
+            @RequestBody @Valid AtualizarDespesaDTO dto, Authentication authentication) {
+
+        try {
+            DespesaDTO atualizada = despesaService.editarDespesa(authentication, id, dto);
+            return ResponseEntity.ok(atualizada);
+
+        } catch (EntityNotFoundException e) {
+            
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Despesa não encontrada");
+        } catch (AccessDeniedException e) {
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Acesso negado, token inválido");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao atualizar despesa: " + e.getMessage());
+        }
+    }
 }
