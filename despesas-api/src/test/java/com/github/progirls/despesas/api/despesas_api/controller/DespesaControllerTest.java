@@ -60,6 +60,7 @@ public class DespesaControllerTest {
     private String userEmail;
     private final String userSenha = "Teste@123";
     private String token;
+    private static final String BASE_URL = "/api/v1/despesas";
 
     @BeforeEach
     void setUp() throws Exception {
@@ -104,7 +105,7 @@ public class DespesaControllerTest {
             null,
             false);
 
-        mockMvc.perform(post("/api/v1/despesas")
+        mockMvc.perform(post(BASE_URL)
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(novaDespesa)))
@@ -124,7 +125,7 @@ public class DespesaControllerTest {
                 }
                 """; 
 
-        mockMvc.perform(post("/api/v1/despesas")
+        mockMvc.perform(post(BASE_URL)
                 .header("Authorization", "Bearer " + this.token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(despesaInvalida))
@@ -143,7 +144,7 @@ public class DespesaControllerTest {
                 null,
                 false);
 
-        mockMvc.perform(post("/api/v1/despesas")
+        mockMvc.perform(post(BASE_URL)
                 .header("Authorization", "Bearer tokenInvalido123")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(novaDespesa)))
@@ -153,7 +154,7 @@ public class DespesaControllerTest {
     @Test
     @DisplayName("Deve listar todas as despesas sem filtro, porém páginadas")
     void deveListarTodasSemFiltrosComSucesso200() throws Exception {
-        mockMvc.perform(get("/api/v1/despesas")
+        mockMvc.perform(get(BASE_URL)
                 .header("Authorization", "Bearer " + this.token))
                 .andExpect(status().isOk());
     }
@@ -161,7 +162,7 @@ public class DespesaControllerTest {
     @Test
     @DisplayName("Deve retornar as despesas com o filtro e status 200")
     void deveListarAsDespesasFiltradasComSucesso200() throws Exception {
-        mockMvc.perform(get("/api/v1/despesas")
+        mockMvc.perform(get(BASE_URL)
                 .param("categoria", "TRANSPORTE")
                 .header("Authorization", "Bearer " + this.token))
                 .andExpect(status().isOk());
@@ -170,7 +171,7 @@ public class DespesaControllerTest {
     @Test
     @DisplayName("Deve retornar erro 400 ao tentar filtar a despesa")
     void deveRetornar400AoListarDespesaComFiltroErrado() throws Exception {
-        mockMvc.perform(get("/api/v1/despesas")
+        mockMvc.perform(get(BASE_URL)
                 .param("categoria", "MERCADO")
                 .param("dataInicio", "data invalida")
                 .header("Authorization", "Bearer " + this.token))
@@ -181,7 +182,7 @@ public class DespesaControllerTest {
     @Test
     @DisplayName("Deve retornar o erro 401 ao tentar listar as despesas com um token inválido")
     void deveRetornar401AoListarDespesaComUmTokenInvalido() throws Exception {
-        mockMvc.perform(get("/api/v1/despesas")
+        mockMvc.perform(get(BASE_URL)
                 .header("Authorization", "Bearer token.invalido"))
                 .andExpect(status().isUnauthorized());
     }
