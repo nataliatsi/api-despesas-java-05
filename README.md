@@ -39,7 +39,7 @@ A API é desenvolvida em **Spring Boot** e utiliza **PostgreSQL** como banco de 
 | POST   | `/api/v1/despesas`          | Cria uma nova despesa ao usuário autenticado         | ✅ JWT Token      |
 | GET    | `/api/v1/despesas`          | Filtra as despesas do usuário autenticado, pode ser por filtro ou todas   | ✅ JWT Token      |
 | PUT    | `/api/v1/despesas`          | Atualiza uma despesa do usuário autenticado pelo seu ID                   | ✅ JWT Token      |
-
+| PATCH  | `/api/v1/despesas/{id}/inativar` | Inativa (safe delete) uma despesa do usuário autenticado pelo seu ID | ✅ JWT Token      |
 
 ---
 
