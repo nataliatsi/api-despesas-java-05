@@ -1,15 +1,13 @@
 package com.github.progirls.despesas.api.despesas_api.controller;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import org.checkerframework.checker.units.qual.s;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,15 +17,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 
-import com.jayway.jsonpath.JsonPath;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.progirls.despesas.api.despesas_api.dto.AtualizarDespesaDTO;
 import com.github.progirls.despesas.api.despesas_api.dto.NovaDespesaDTO;
 import com.github.progirls.despesas.api.despesas_api.entities.Despesa;
 import com.github.progirls.despesas.api.despesas_api.entities.Usuario;
@@ -57,8 +52,6 @@ public class DespesaControllerTest {
     @Autowired
     private DespesaRepository despesaRepository;
 
-    private String userEmail;
-    private final String userSenha = "Teste@123";
     private String token;
     private static final String BASE_URL = "/api/v1/despesas";
 
@@ -67,8 +60,9 @@ public class DespesaControllerTest {
         despesaRepository.deleteAll();
         usuarioRepository.deleteAll();
 
-        userEmail = "teste" + System.currentTimeMillis() + "@teste.com";
+        String userEmail = "teste" + System.currentTimeMillis() + "@teste.com";
 
+        String userSenha = "Teste@123";
         Usuario user = new Usuario(
                 null,
                 "Teste",
@@ -103,7 +97,8 @@ public class DespesaControllerTest {
             2,
             LocalDate.now(),
             null,
-            false);
+            false,
+                true);
 
         mockMvc.perform(post(BASE_URL)
                 .header("Authorization", "Bearer " + token)
@@ -115,7 +110,7 @@ public class DespesaControllerTest {
 
     @Test
     @DisplayName("Deve retornar erro 400 por criar uma despesa com campos inválidos")
-    void deveRetornarErro400DespesaComCampoInválidos() throws Exception {
+    void deveRetornarErro400DespesaComCampoInvalidos() throws Exception {
                 
         String despesaInvalida = """
                 {
@@ -142,7 +137,8 @@ public class DespesaControllerTest {
                 2,
                 LocalDate.now(),
                 null,
-                false);
+                false,
+                true);
 
         mockMvc.perform(post(BASE_URL)
                 .header("Authorization", "Bearer tokenInvalido123")
@@ -183,6 +179,45 @@ public class DespesaControllerTest {
     @DisplayName("Deve retornar o erro 401 ao tentar listar as despesas com um token inválido")
     void deveRetornar401AoListarDespesaComUmTokenInvalido() throws Exception {
         mockMvc.perform(get(BASE_URL)
+                .header("Authorization", "Bearer token.invalido"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @DisplayName("Safe delete: Deve inativar uma despesa com sucesso e retornar 200")
+    @Test
+    void deveInativarUmaDespesaComSucesso() throws Exception {
+        NovaDespesaDTO novaDespesa = new NovaDespesaDTO("SAÚDE", 300.0, "remédios", 1, LocalDate.now(), null, false, true);
+
+        MvcResult result = mockMvc.perform(post(BASE_URL)
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(novaDespesa)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String locationHeader = result.getResponse().getHeader("location");
+        Long idDespesa = Long.valueOf(locationHeader.substring(locationHeader.lastIndexOf("/") + 1));
+
+        mockMvc.perform(patch(BASE_URL + "/" + idDespesa + "/inativar")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        Despesa despesa = despesaRepository.findById(idDespesa).orElseThrow();
+        assertFalse(despesa.getAtivo());
+    }
+
+    @DisplayName("Safe delete: Deve retornar 400 ao tentar inativar despesa inexistente ou de outro usuário")
+    @Test
+    void deveRetornar400AoInativarUmaDespesaInexistente() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/99999/inativar")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isBadRequest());
+    }
+
+    @DisplayName("Safe delete: Deve retornar 401 ao tentar inativar uma despesa com token inválido")
+    @Test
+    void deveRetornar401AoInativarUmaDespesaComTokenInvalido() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/1/inativar")
                 .header("Authorization", "Bearer token.invalido"))
                 .andExpect(status().isUnauthorized());
     }
