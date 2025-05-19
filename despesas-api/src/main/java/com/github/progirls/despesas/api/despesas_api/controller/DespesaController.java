@@ -18,6 +18,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.net.URI;
 import java.nio.file.AccessDeniedException;
 
 import org.springframework.data.domain.*;
@@ -50,14 +51,16 @@ public class DespesaController {
     public ResponseEntity<?> criarDespesa(@Valid @RequestBody NovaDespesaDTO dto, Authentication authentication) {
         try {
             var novaDespesa = despesaService.criarDespesa(dto, authentication);
-            return ResponseEntity.status(HttpStatus.CREATED).body(novaDespesa);
+            URI location = URI.create("/api/v1/despesas/" + novaDespesa.id());
+            return ResponseEntity
+                    .created(location)
+                    .body(novaDespesa);
 
         } catch (Exception e) {
-
             return ResponseEntity.badRequest().body("Erro inesperado: " + e.getMessage());
         }
-
     }
+
 
     @Operation(
             summary = "Lista as despesas com ou sem filtro com o usuário autenticado",
