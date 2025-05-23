@@ -111,6 +111,11 @@
 			<version>1.6.3</version> <!-- Verifique a versão mais recente -->
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>
