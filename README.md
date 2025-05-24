@@ -47,9 +47,29 @@ A API é desenvolvida em **Spring Boot** e utiliza **PostgreSQL** como banco de 
 
 ## Autenticação
 
+A API utiliza **Spring Security** em conjunto com **OAuth2 Resource Server** para proteger os endpoints de forma robusta.
+
+São utilizados dois métodos de autenticação:
+
+* **Autenticação Básica (Basic Auth)**: utilizada exclusivamente no endpoint de login (`/api/v1/login`). O usuário informa email e senha, e em caso de sucesso, recebe um token JWT.
+
+* **JWT (Bearer Token)**: após o login, o token JWT deve ser enviado no cabeçalho `Authorization` para acessar rotas privadas. Esse token é validado automaticamente pelo `OAuth2 Resource Server`.
+
+Exemplo de envio do token nas requisições autenticadas:
+
+```
+Authorization: Bearer SEU_TOKEN_JWT
+```
+
 ---
 
 ## Validação dos Dados
+
+A API utiliza a biblioteca **Jakarta Bean Validation** (por meio do starter `spring-boot-starter-validation`) para validar automaticamente os dados recebidos nas requisições.
+
+* Todos os **parâmetros** e **corpos de requisição (request bodies)** são validados antes da execução da lógica de negócio.
+* As anotações de validação (`@NotNull`, `@Email`, `@Size`, `@Pattern`, entre outras) garantem que os dados estejam no formato esperado e com valores obrigatórios preenchidos.
+* A utilização de **DTOs (Data Transfer Objects)** permite isolar as camadas da aplicação e proteger a integridade das entidades do domínio, garantindo que apenas os dados necessários sejam expostos e modificados.
 
 ---
 
