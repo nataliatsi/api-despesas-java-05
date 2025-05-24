@@ -21,7 +21,7 @@ import jakarta.transaction.Transactional;
 @Service
 public class UsuarioService {
 
-    private BCryptPasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder passwordEncoder;
     private final UsuarioRepository usuarioRepository;
     private final OtpTokenRepository otpTokenRepository;
 
@@ -65,12 +65,13 @@ public class UsuarioService {
         usuarioRepository.save(usuario);
     }
 
+    @Transactional
     public void redefinirSenhaComOtp(String email, String codigo, String novaSenha) {
 
         Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
 
-        OtpToken otp = otpTokenRepository.findByUsuario(usuario).filter(t -> t.getCodigo().equals(codigo) && LocalDateTime.now().isBefore(t.getExpiracao())).orElseThrow(() -> new RuntimeException("Código inválido ou expirado"));
+        OtpToken otp = otpTokenRepository.findByUsuario(usuario).filter(t -> t.getCodigo().equals(codigo) && LocalDateTime.now().isBefore(t.getExpiracao())).orElseThrow(() -> new IllegalArgumentException("Código OTP inválido."));
 
         usuario.setSenha(passwordEncoder.encode(novaSenha));
         usuarioRepository.save(usuario);
