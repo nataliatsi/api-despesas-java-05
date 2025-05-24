@@ -2,6 +2,7 @@ package com.github.progirls.despesas.api.despesas_api.controller;
 
 import java.util.List;
 
+import com.github.progirls.despesas.api.despesas_api.dto.UsuarioRedefinirSenhaPorOtpDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,10 +26,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 @RestController
 @RequestMapping("/api/v1/usuarios")
 public class UsuarioController {
-    
+
     private final UsuarioService usuarioService;
 
-    private UsuarioController(UsuarioService usuarioService) {
+    public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
     }
 
@@ -65,6 +66,22 @@ public class UsuarioController {
                                                  Authentication authentication) {
         usuarioService.atualizarSenha(novaSenha, authentication);
         return ResponseEntity.ok().body("Senha alterada com sucesso!");
+    }
+
+    @Operation(
+            summary = "Redefinir senha usando OTP",
+            description = "Permite ao usuário redefinir a senha fornecendo o email, código OTP e nova senha. " +
+                    "Não requer autenticação JWT.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Senha redefinida com sucesso."),
+                    @ApiResponse(responseCode = "400", description = "Dados inválidos ou código OTP incorreto.")
+                    // @ApiResponse(responseCode = "404", description = "Usuário com o email informado não encontrado.")
+            }
+    )
+    @PatchMapping("/redefinir-senha")
+    public ResponseEntity<String> redefinirSenhaComOtp(@RequestBody @Valid UsuarioRedefinirSenhaPorOtpDTO dto) {
+        usuarioService.redefinirSenhaComOtp(dto.email(), dto.codigo(), dto.novaSenha());
+        return ResponseEntity.ok("Senha redefinida com sucesso.");
     }
 
 }
