@@ -10,6 +10,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import java.time.LocalDateTime;
 
 import com.github.progirls.despesas.api.despesas_api.dto.UsuarioRedefinirSenhaDTO;
+import com.github.progirls.despesas.api.despesas_api.dto.UsuarioRedefinirSenhaPorOtpDTO;
+import com.github.progirls.despesas.api.despesas_api.entities.OtpToken;
+import com.github.progirls.despesas.api.despesas_api.repository.OtpTokenRepository;
+import com.github.progirls.despesas.api.despesas_api.service.OtpService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,30 +44,40 @@ public class UsuarioControllerTest {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
+    private OtpTokenRepository otpTokenRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
     private final String userEmail = "existente@teste.com";
-    private final String userSenha = "Senha@123.";
+    private final String otpValido = "123456";
     private String token;
-    private String tokenInvalido = "tokenInvalido123";
 
     private static final String BASE_URL = "/api/v1/usuarios";
 
     @BeforeEach
     void setUp() throws Exception {
+        otpTokenRepository.deleteAll();
         usuarioRepository.deleteAll();
 
         Usuario usuario = new Usuario();
         usuario.setId(null);
         usuario.setNome("Usuário Existente");
         usuario.setEmail(userEmail);
+        String userSenha = "Senha@123.";
         usuario.setSenha(passwordEncoder.encode(userSenha));
         usuario.setDataCriacao(LocalDateTime.now());
 
         usuarioRepository.save(usuario);
+
+        OtpToken otpToken = new OtpToken();
+        otpToken.setCodigo(otpValido);
+        otpToken.setExpiracao(LocalDateTime.now().plusMinutes(5));
+        otpToken.setUsuario(usuario);
+        otpTokenRepository.save(otpToken);
 
         MvcResult loginResult = mockMvc.perform(post("/api/v1/login")
                         .with(httpBasic(userEmail, userSenha)))
@@ -76,6 +90,7 @@ public class UsuarioControllerTest {
 
     @AfterEach
     void tearDown() {
+        otpTokenRepository.deleteAll();
         usuarioRepository.deleteAll();
     }
     @Test
@@ -158,11 +173,72 @@ public class UsuarioControllerTest {
     void deveRetornar401NaRedefinicaoDeSenhaComTokenInvalido() throws Exception{
         UsuarioRedefinirSenhaDTO dto = new UsuarioRedefinirSenhaDTO("NovaSenha@123!");
 
+        String tokenInvalido = "tokenInvalido123";
         mockMvc.perform(patch(BASE_URL + "/senha")
                         .header("Authorization", "Bearer " + tokenInvalido)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 200 e redefinir a senha com sucesso usando OTP válido")
+    void deveRetornar200ParaRedefinirSenhaComOtpValido() throws Exception {
+        UsuarioRedefinirSenhaPorOtpDTO dto = new UsuarioRedefinirSenhaPorOtpDTO(userEmail, otpValido, "NovaSenha@123!");
+
+        mockMvc.perform(patch(BASE_URL + "/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Senha redefinida com sucesso."));
+
+        Usuario atualizado = usuarioRepository.findByEmail(userEmail).orElseThrow();
+        assertTrue(passwordEncoder.matches("NovaSenha@123!", atualizado.getSenha()));
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 ao tentar redefinir a senha com OTP inválido")
+    void deveRetornar400ParaRedefinirSenhaComOtpInvalido() throws Exception {
+        UsuarioRedefinirSenhaPorOtpDTO dto = new UsuarioRedefinirSenhaPorOtpDTO(userEmail, "00-00-00", "NovaSenha@123!");
+
+        mockMvc.perform(patch(BASE_URL + "/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 ao tentar redefinir a senha com email inválido")
+    void deveRetornar400ParaRedefinirSenhaComEmailInvalido() throws Exception {
+        UsuarioRedefinirSenhaPorOtpDTO dto = new UsuarioRedefinirSenhaPorOtpDTO("email-invalido", otpValido, "NovaSenha@123!");
+
+        mockMvc.perform(patch(BASE_URL + "/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 ao tentar redefinir a senha com senha inválida")
+    void deveRetornar400ParaRedefinirSenhaComSenhaInvalida() throws Exception {
+        UsuarioRedefinirSenhaPorOtpDTO dto = new UsuarioRedefinirSenhaPorOtpDTO(userEmail, otpValido, "Senha123");
+
+        mockMvc.perform(patch(BASE_URL + "/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 400 ao tentar redefinir a senha com email de usuário inexistente")
+    void deveRetornar400ParaRedefinirSenhaComUsuarioInexistente() throws Exception {
+        String emailInexistente = "naoexiste@email.com";
+        UsuarioRedefinirSenhaPorOtpDTO dto = new UsuarioRedefinirSenhaPorOtpDTO(emailInexistente, otpValido, "NovaSenha@123!");
+
+        mockMvc.perform(patch(BASE_URL + "/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
     }
 
 }
