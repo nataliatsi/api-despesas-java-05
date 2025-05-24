@@ -75,7 +75,6 @@ public class UsuarioController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Senha redefinida com sucesso."),
                     @ApiResponse(responseCode = "400", description = "Dados inválidos ou código OTP incorreto.")
-                    // @ApiResponse(responseCode = "404", description = "Usuário com o email informado não encontrado.")
             }
     )
     @PatchMapping("/redefinir-senha")
