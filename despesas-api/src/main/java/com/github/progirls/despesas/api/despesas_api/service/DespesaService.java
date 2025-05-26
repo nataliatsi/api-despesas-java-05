@@ -126,6 +126,27 @@ public class DespesaService {
         return dto.quitado() != null ? dto.quitado() : false;
     }
 
+
+    @Transactional
+    public void quitarDespesa(Long id, Authentication authentication) {
+        Despesa despesa = despesaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Despesa não encontrada."));
+
+        Usuario usuarioLogado = authenticatedUserService.getUsuarioAutenticado(authentication);
+
+        if (!despesa.getUsuario().getId().equals(usuarioLogado.getId())) {
+            throw new IllegalArgumentException("Você não tem permissão para alterar esta despesa.");
+        }
+
+        LocalDate hoje = LocalDate.now();
+        if (despesa.getDataFim() == null || despesa.getDataFim().isAfter(hoje)) {
+            throw new IllegalArgumentException("A despesa ainda não pode ser marcada como quitada.");
+        }
+
+        despesa.setQuitado(true);
+        despesaRepository.save(despesa);
+    }
+
     public void safeDeleteDespesa(Long idDespesa, Authentication authentication) {
         var idUsuario = authenticatedUserService.getIdUsuarioAutenticado(authentication);
 
@@ -133,6 +154,7 @@ public class DespesaService {
 
         despesa.setAtivo(false);
         despesaRepository.save(despesa);
+
 
     }
 }

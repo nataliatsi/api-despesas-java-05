@@ -89,24 +89,24 @@ public class DespesaController {
 
         if (comFiltro) {
             List<DespesaFiltradaDTO> despesas = despesaService.buscarDespesasComFiltros(categoria, dataInicio, dataFim, authentication);
-    
+
             String mensagem = despesas.isEmpty()
                     ? "Nenhuma despesa encontrada com os filtros fornecidos."
                     : "Despesas encontradas com sucesso.";
-    
+
             ListaDespesasResponseDTO resposta = new ListaDespesasResponseDTO(mensagem, despesas);
             return ResponseEntity.ok(resposta);
-            
+
         } else {
-            
+
             try {
                 Pageable pageable = PageRequest.of(0, 6);
                 Page<DespesaDTO> despesaPage = despesaService.listarDespesaDoUsuario(authentication, pageable);
-        
+
                 return ResponseEntity.ok(new PageResponseDTO<>(despesaPage));
-        
+
             } catch (Exception e) {
-        
+
                 return ResponseEntity.badRequest().body("Erro inesperado: " + e.getMessage());
             }
         }
@@ -114,15 +114,15 @@ public class DespesaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizarDespesa(@PathVariable Long id, 
-            @RequestBody @Valid AtualizarDespesaDTO dto, Authentication authentication) {
+    public ResponseEntity<?> atualizarDespesa(@PathVariable Long id,
+                                              @RequestBody @Valid AtualizarDespesaDTO dto, Authentication authentication) {
 
         try {
             DespesaDTO atualizada = despesaService.editarDespesa(authentication, id, dto);
             return ResponseEntity.ok(atualizada);
 
         } catch (EntityNotFoundException e) {
-            
+
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Despesa não encontrada");
         } catch (AccessDeniedException e) {
 
@@ -131,6 +131,20 @@ public class DespesaController {
             return ResponseEntity.badRequest().body("Erro ao atualizar despesa: " + e.getMessage());
         }
     }
+
+
+    @PatchMapping("/{id}/quitar")
+    @Operation(summary = "Marcar despesa como quitada",
+            description = "Atualiza o status da despesa para quitada, caso a data da despesa já tenha passado.")
+    public ResponseEntity<?> quitarDespesa(@PathVariable Long id, Authentication authentication) {
+        try {
+            despesaService.quitarDespesa(id, authentication);
+            return ResponseEntity.ok("Quitada.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro inesperado: " + e.getMessage());
+        }
 
     @Operation(
             summary = "Desativar uma despesa (safe delete)",
@@ -149,5 +163,8 @@ public class DespesaController {
             Authentication authentication) {
         despesaService.safeDeleteDespesa(id, authentication);
         return ResponseEntity.ok("Despesa deletada com sucesso.");
+
     }
 }
+
+
