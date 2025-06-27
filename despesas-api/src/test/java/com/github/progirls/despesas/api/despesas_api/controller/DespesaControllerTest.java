@@ -3,11 +3,14 @@ package com.github.progirls.despesas.api.despesas_api.controller;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,6 +55,7 @@ public class DespesaControllerTest {
     @Autowired
     private DespesaRepository despesaRepository;
 
+    private Usuario usuario;
     private String token;
     private static final String BASE_URL = "/api/v1/despesas";
 
@@ -63,13 +67,13 @@ public class DespesaControllerTest {
         String userEmail = "teste" + System.currentTimeMillis() + "@teste.com";
 
         String userSenha = "Teste@123";
-        Usuario user = new Usuario(
+        usuario = usuarioRepository.save(new Usuario(
                 null,
                 "Teste",
                 userEmail,
                 passwordEncoder.encode(userSenha),
-                LocalDateTime.now());
-        usuarioRepository.save(user);
+                LocalDateTime.now()));
+        usuarioRepository.save(usuario);
 
         MvcResult loginResult = mockMvc.perform(post("/api/v1/login")
                         .with(httpBasic(userEmail, userSenha)))
@@ -145,6 +149,48 @@ public class DespesaControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(novaDespesa)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Deve listar apenas despesas ativas quando não usar filtros")
+    void deveListarApenasDespesasAtivasSemFiltro() throws Exception {
+
+        Despesa despesaAtiva1 = new Despesa(null, usuario, "TRANSPORTE", 100.0, "ônibus", 1,
+                LocalDate.now(), null, false, true);
+        Despesa despesaAtiva2 = new Despesa(null, usuario, "ALIMENTAÇÃO", 50.0, "almoço", 1,
+                LocalDate.now(), null, false, true);
+        Despesa despesaInativa = new Despesa(null, usuario, "LAZER", 200.0, "cinema", 1,
+                LocalDate.now(), null, false, false);
+
+        despesaRepository.saveAll(List.of(despesaAtiva1, despesaAtiva2, despesaInativa));
+
+        mockMvc.perform(get(BASE_URL)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[?(@.ativo == false)]").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("Deve listar apenas despesas ativas quando usar filtro")
+    void deveListarDespesasAtivasComFiltroCategoria() throws Exception {
+        Despesa despesaAtiva1 = new Despesa(null, usuario, "TRANSPORTE", 100.0, "ônibus", 1,
+                LocalDate.of(2025, 6, 1), null, false, true);
+        Despesa despesaAtiva2 = new Despesa(null, usuario, "TRANSPORTE", 50.0, "metrô", 1,
+                LocalDate.of(2025, 6, 10), null, false, true);
+        Despesa despesaInativa = new Despesa(null, usuario, "TRANSPORTE", 30.0, "táxi", 1,
+                LocalDate.of(2025, 6, 5), null, false, false);
+
+        despesaRepository.saveAll(List.of(despesaAtiva1, despesaAtiva2, despesaInativa));
+
+        mockMvc.perform(get(BASE_URL)
+                        .param("categoria", "TRANSPORTE")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.despesas.length()").value(2))
+                .andExpect(jsonPath("$.despesas[?(@.ativo == false)]").doesNotExist())
+                .andExpect(jsonPath("$.despesas[*].categoria").value(
+                        Matchers.everyItem(Matchers.equalTo("TRANSPORTE"))));
     }
 
     @Test
