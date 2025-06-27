@@ -103,10 +103,11 @@ public class DespesaService {
             throw new AccessDeniedException("Você não tem permissão para editar essa despesa.");
         }
 
-        despesa.setValor(atualizarDespesa.valor());
-        despesa.setDescricao(atualizarDespesa.descricao());
-        despesa.setParcelamento(atualizarDespesa.parcelamento());
-        despesa.setDataInicio(atualizarDespesa.dataInicio());
+        if (Boolean.FALSE.equals(despesa.getAtivo())) {
+            throw new IllegalStateException("Não é possível editar uma despesa inativa.");
+        }
+
+        despesaMapper.atualizarDespesa(despesa, atualizarDespesa);
 
         if (atualizarDespesa.parcelamento() == 1) {
             despesa.setDataFim(atualizarDespesa.dataInicio());
@@ -116,6 +117,7 @@ public class DespesaService {
 
         return despesaMapper.toDTO(despesaRepository.save(despesa));
     }
+
 
     private LocalDate calcularDataFim(LocalDate dataInicio, int parcelamento) {
         return dataInicio.plusMonths(parcelamento);
