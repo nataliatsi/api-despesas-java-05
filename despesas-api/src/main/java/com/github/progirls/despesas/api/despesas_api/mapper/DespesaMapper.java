@@ -1,13 +1,9 @@
 package com.github.progirls.despesas.api.despesas_api.mapper;
 
-import com.github.progirls.despesas.api.despesas_api.dto.DespesaDTO;
-import com.github.progirls.despesas.api.despesas_api.dto.DespesaFiltradaDTO;
-import com.github.progirls.despesas.api.despesas_api.dto.NovaDespesaDTO;
-import com.github.progirls.despesas.api.despesas_api.dto.UsuarioDTO;
+import com.github.progirls.despesas.api.despesas_api.dto.*;
 import com.github.progirls.despesas.api.despesas_api.entities.Despesa;
 import com.github.progirls.despesas.api.despesas_api.entities.Usuario;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface DespesaMapper {
@@ -20,6 +16,9 @@ public interface DespesaMapper {
     DespesaDTO toDTO(Despesa despesa);
 
     DespesaFiltradaDTO toFiltradaDTO(Despesa despesa);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void atualizarDespesa(@MappingTarget Despesa despesa, AtualizarDespesaDTO dto);
 
     UsuarioDTO toUsuarioDTO(Usuario usuario);
 }
