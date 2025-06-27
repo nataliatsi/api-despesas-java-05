@@ -40,13 +40,18 @@ public class DespesaController {
         this.despesaService = despesaService;
     }
 
-    @Operation(summary = "Criar uma nova despesa ao usuário autenticado",
-
-            description = "Este endpoint permite que o usuário crie uma despesa nova. " +
-                    "O usuário precisa estar autenticado para realizar a criação. ", responses = {
-            @ApiResponse(responseCode = "201", description = "Despesa criada com sucesso."),
-            @ApiResponse(responseCode = "400", description = "Despesa com dados incompletos ou inválidos."),
-            @ApiResponse(responseCode = "401", description = "Falha na autenticação. Token inválido ou ausente.")})
+    @Operation(
+            summary = "Criar uma nova despesa ao usuário autenticado",
+            description = "Este endpoint permite que o usuário crie uma despesa nova. O usuário precisa estar autenticado para realizar a criação.",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Despesa criada com sucesso.",
+                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DespesaDTO.class))),
+                    @ApiResponse(responseCode = "400", description = "Despesa com dados incompletos ou inválidos.",
+                            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Dados inválidos\"}"))),
+                    @ApiResponse(responseCode = "401", description = "Falha na autenticação. Token inválido ou ausente.",
+                            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Token inválido ou ausente\"}")))
+            }
+    )
     @PostMapping
     public ResponseEntity<?> criarDespesa(@Valid @RequestBody NovaDespesaDTO dto, Authentication authentication) {
         try {
@@ -66,10 +71,11 @@ public class DespesaController {
             description = "Se nenhum filtro for passado, retorna a lista de despesas paginadas. Se filtros forem usados, retorna a lista filtrada",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Despesas encontradas com sucesso",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = ListaDespesasResponseDTO.class))),
-                    @ApiResponse(responseCode = "400", description = "Parâmetros inválidos", content = @Content),
-                    @ApiResponse(responseCode = "401", description = "Falha na autenticação. Token inválido ou ausente.")
+                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ListaDespesasResponseDTO.class))),
+                    @ApiResponse(responseCode = "400", description = "Parâmetros inválidos",
+                            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Parâmetros inválidos\"}"))),
+                    @ApiResponse(responseCode = "401", description = "Falha na autenticação. Token inválido ou ausente",
+                            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Token inválido ou ausente\"}")))
             }
     )
     @GetMapping
@@ -112,9 +118,27 @@ public class DespesaController {
 
     }
 
+    @Operation(
+            summary = "Atualizar uma despesa",
+            description = "Atualiza os dados de uma despesa ativa vinculada ao usuário autenticado. Não é possível atualizar despesas inativas.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Despesa atualizada com sucesso",
+                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DespesaDTO.class))),
+                    @ApiResponse(responseCode = "400", description = "Erro de validação ou tentativa de atualizar uma despesa inativa",
+                            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Erro de validação\"}"))),
+                    @ApiResponse(responseCode = "403", description = "Token inválido ou tentativa de editar despesa de outro usuário",
+                            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Acesso negado\"}"))),
+                    @ApiResponse(responseCode = "404", description = "Despesa não encontrada",
+                            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Despesa não encontrada\"}")))
+            }
+    )
     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizarDespesa(@PathVariable Long id,
-                                              @RequestBody @Valid AtualizarDespesaDTO dto, Authentication authentication) {
+    public ResponseEntity<?> atualizarDespesa(
+            @Parameter(description = "ID da despesa a ser atualizada", required = true)
+            @PathVariable Long id,
+            @RequestBody @Valid AtualizarDespesaDTO dto,
+            @Parameter(hidden = true) Authentication authentication
+    ) {
 
         try {
             DespesaDTO atualizada = despesaService.editarDespesa(authentication, id, dto);
@@ -147,12 +171,14 @@ public class DespesaController {
 
     @Operation(
             summary = "Desativar uma despesa (safe delete)",
-            description = "Marca a despesa como inativa em vez de removê-la do banco de dados. " +
-                    "Retorna mensagem confirmando a exclusão lógica.",
+            description = "Marca a despesa como inativa em vez de removê-la do banco de dados. Retorna mensagem confirmando a exclusão lógica.",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "Despesa deletada com sucesso.", content = @Content(mediaType = "text/plain")),
-                    @ApiResponse(responseCode = "400", description = "Despesa não encontrada", content = @Content),
-                    @ApiResponse(responseCode = "401", description = "Falha na autenticação. Token ausente ou inválido.", content = @Content)
+                    @ApiResponse(responseCode = "200", description = "Despesa deletada com sucesso.",
+                            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Despesa desativada com sucesso\"}"))),
+                    @ApiResponse(responseCode = "400", description = "Despesa não encontrada",
+                            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Despesa não encontrada\"}"))),
+                    @ApiResponse(responseCode = "401", description = "Falha na autenticação. Token ausente ou inválido.",
+                            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Token inválido ou ausente\"}")))
             }
     )
     @PatchMapping("/{id}/inativar")
