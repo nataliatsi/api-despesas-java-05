@@ -14,7 +14,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface DespesaRepository extends JpaRepository<Despesa, Long>, JpaSpecificationExecutor<Despesa> {
-    Page<Despesa> findByUsuario(Usuario usuario, Pageable pageable);
+
+    Page<Despesa> findByUsuarioAndAtivo(Usuario usuario, Boolean ativo, Pageable pageable);
 
     @Query("SELECT d FROM Despesa d WHERE d.id = :idDespesa AND d.usuario.id = :idUsuario")
     Optional<Despesa> buscarDespesaDoUsuario(@Param("idDespesa") Long idDespesa, @Param("idUsuario") UUID idUsuario);

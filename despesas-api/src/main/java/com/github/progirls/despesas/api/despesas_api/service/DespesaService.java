@@ -82,12 +82,11 @@ public class DespesaService {
 
     @Transactional
     public Page<DespesaDTO> listarDespesaDoUsuario(Authentication authentication, Pageable pageable) {
-
         String email = authentication.getName();
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
 
-        return despesaRepository.findByUsuario(usuario, pageable)
+        return despesaRepository.findByUsuarioAndAtivo(usuario, true, pageable)
                 .map(despesaMapper::toDTO);
     }
 

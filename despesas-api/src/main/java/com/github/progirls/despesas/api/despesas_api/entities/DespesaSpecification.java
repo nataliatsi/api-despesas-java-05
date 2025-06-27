@@ -9,12 +9,13 @@ import java.util.List;
 
 public class DespesaSpecification {
 
-    public static Specification<Despesa> comFiltros(Usuario usuario, String categoria, LocalDate dataInicio, LocalDate dataFim){
+    public static Specification<Despesa> comFiltros(Usuario usuario, String categoria, LocalDate dataInicio, LocalDate dataFim) {
 
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             predicates.add(cb.equal(root.get("usuario"), usuario));
+            predicates.add(cb.isTrue(root.get("ativo")));
 
             if(categoria != null && !categoria.isEmpty()){
                 predicates.add(cb.equal(root.get("categoria"), categoria));

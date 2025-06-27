@@ -61,7 +61,6 @@ public class DespesaController {
         }
     }
 
-
     @Operation(
             summary = "Lista as despesas com ou sem filtro com o usuário autenticado",
             description = "Se nenhum filtro for passado, retorna a lista de despesas paginadas. Se filtros forem usados, retorna a lista filtrada",
@@ -132,10 +131,9 @@ public class DespesaController {
         }
     }
 
-
-    @PatchMapping("/{id}/quitar")
     @Operation(summary = "Marcar despesa como quitada",
             description = "Atualiza o status da despesa para quitada, caso a data da despesa já tenha passado.")
+    @PatchMapping("/{id}/quitar")
     public ResponseEntity<?> quitarDespesa(@PathVariable Long id, Authentication authentication) {
         try {
             despesaService.quitarDespesa(id, authentication);
@@ -145,15 +143,16 @@ public class DespesaController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro inesperado: " + e.getMessage());
         }
+    }
 
     @Operation(
             summary = "Desativar uma despesa (safe delete)",
             description = "Marca a despesa como inativa em vez de removê-la do banco de dados. " +
                     "Retorna mensagem confirmando a exclusão lógica.",
             responses = {
-                @ApiResponse(responseCode = "200", description = "Despesa deletada com sucesso.", content = @Content(mediaType = "text/plain")),
-                @ApiResponse(responseCode = "400", description = "Despesa não encontrada", content = @Content),
-                @ApiResponse(responseCode = "401", description = "Falha na autenticação. Token ausente ou inválido.", content = @Content),
+                    @ApiResponse(responseCode = "200", description = "Despesa deletada com sucesso.", content = @Content(mediaType = "text/plain")),
+                    @ApiResponse(responseCode = "400", description = "Despesa não encontrada", content = @Content),
+                    @ApiResponse(responseCode = "401", description = "Falha na autenticação. Token ausente ou inválido.", content = @Content)
             }
     )
     @PatchMapping("/{id}/inativar")
