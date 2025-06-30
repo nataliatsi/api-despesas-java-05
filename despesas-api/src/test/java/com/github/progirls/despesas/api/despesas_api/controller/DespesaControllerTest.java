@@ -1,6 +1,7 @@
 package com.github.progirls.despesas.api.despesas_api.controller;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -11,10 +12,7 @@ import java.util.List;
 
 import com.github.progirls.despesas.api.despesas_api.dto.AtualizarDespesaDTO;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -364,4 +362,39 @@ public class DespesaControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @DisplayName("Deve quitar uma despesa com sucesso e retornar 200")
+    @Test
+    void deveRetornar200AoQuitarUmaDespesaComSucesso() throws Exception {
+        NovaDespesaDTO novaDespesa = new NovaDespesaDTO("SAÚDE", 300.0, "remédios", 1, LocalDate.now(), null, false, true);
+
+        MvcResult result = mockMvc.perform(post(BASE_URL)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(novaDespesa)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String locationHeader = result.getResponse().getHeader("location");
+        Assertions.assertNotNull(locationHeader);
+        Long idDespesa = Long.valueOf(locationHeader.substring(locationHeader.lastIndexOf("/") + 1));
+
+        mockMvc.perform(patch(BASE_URL + "/" + idDespesa + "/quitar")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        Despesa despesa = despesaRepository.findById(idDespesa).orElseThrow();
+        assertTrue(despesa.getQuitado());
+    }
+
+    @DisplayName("Deve retornar 400 ao tentar quitar despesa com data futura")
+    @Test
+    void deveRetornar400AoQuitarComDataInvalida() throws Exception {
+        Despesa despesa = new Despesa(null, usuario, "SAÚDE", 100.0, "remédio", 1,
+                LocalDate.now().plusDays(3), null, false, true);
+        despesa = despesaRepository.save(despesa);
+
+        mockMvc.perform(patch(BASE_URL + "/" + despesa.getId() + "/quitar")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isBadRequest());
+    }
 }

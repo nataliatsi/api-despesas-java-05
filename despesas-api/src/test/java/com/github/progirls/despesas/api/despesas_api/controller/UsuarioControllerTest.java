@@ -1,19 +1,15 @@
 package com.github.progirls.despesas.api.despesas_api.controller;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-
-import java.time.LocalDateTime;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.progirls.despesas.api.despesas_api.dto.UsuarioRedefinirSenhaDTO;
 import com.github.progirls.despesas.api.despesas_api.dto.UsuarioRedefinirSenhaPorOtpDTO;
+import com.github.progirls.despesas.api.despesas_api.dto.UsuarioRegisterDto;
 import com.github.progirls.despesas.api.despesas_api.entities.OtpToken;
+import com.github.progirls.despesas.api.despesas_api.entities.Usuario;
 import com.github.progirls.despesas.api.despesas_api.repository.OtpTokenRepository;
-import com.github.progirls.despesas.api.despesas_api.service.OtpService;
+import com.github.progirls.despesas.api.despesas_api.repository.UsuarioRepository;
+import com.github.progirls.despesas.api.despesas_api.service.UsuarioService;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,13 +20,20 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.progirls.despesas.api.despesas_api.dto.UsuarioRegisterDto;
-import com.github.progirls.despesas.api.despesas_api.entities.Usuario;
-import com.github.progirls.despesas.api.despesas_api.repository.UsuarioRepository;
 import org.springframework.test.web.servlet.MvcResult;
+
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @AutoConfigureMockMvc

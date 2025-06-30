@@ -36,8 +36,8 @@ public class OtpControllerTest {
     // e também os métodos `verify(...)` e `verifyNoInteractions(...)` nos testes.
     // Isso permitirá testar apenas a chamada do serviço, sem enviar emails de verdade.
 
-    // @MockitoBean
-    // private OtpService otpService;
+     @MockitoBean
+     private OtpService otpService;
 
     @Autowired
     private OtpTokenRepository otpTokenRepository;
@@ -80,7 +80,7 @@ public class OtpControllerTest {
                         .param("email", email))
                 .andExpect(status().isOk());
 
-//        verify(otpService, times(1)).gerarEEnviarOtp(email);
+        verify(otpService, times(1)).gerarEEnviarOtp(email);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class OtpControllerTest {
                         .param("email", emailInvalido))
                 .andExpect(status().isBadRequest());
 
-//        verifyNoInteractions(otpService);
+        verifyNoInteractions(otpService);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class OtpControllerTest {
         mockMvc.perform(post("/api/v1/otp/enviar"))
                 .andExpect(status().isBadRequest());
 
-//        verifyNoInteractions(otpService);
+        verifyNoInteractions(otpService);
     }
 
 }
